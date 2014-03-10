@@ -64,7 +64,7 @@ def main(args):
     filewatcher = {"name": "FileWatcher", "func": Filewatcher}
     filemare = {"name": "FileMare", "func": Filemare}
     # Insert the services you want to use in the tuple below
-    functions = (filemare, )
+    functions = (napalm, mamont, filemare, filewatcher)
     for function in functions:
         try:
             stderr.write("\t-=[ {0} ]=-\n".format(function["name"]))

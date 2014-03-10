@@ -21,7 +21,6 @@ class Filemare(object):
         self._session = requests.Session()
         self._get_default_headers()
         self._session.get(self._built_url)
-        print self._session.cookies
         self._collected = []
 
     def _filter(self, source):
