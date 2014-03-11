@@ -137,7 +137,7 @@ class Mamont():
             req = requests.get(url, headers={"User-Agent": user_agent,
                                              "Connection": "close"})
         except(requests.exceptions.ConnectionError):
-            stderr.write("Failed to connect to mmnt.ru!\n")
+            stderr.write("Failed to establish a connection!\n")
             stderr.flush()
             return
 

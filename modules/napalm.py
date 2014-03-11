@@ -60,7 +60,7 @@ class Napalm(threading.Thread):
                 stderr.flush()
                 return
         except(requests.exceptions.ConnectionError):
-            stderr.write("Failed to establish connection!\n")
+            stderr.write("Failed to establish a connection!\n")
             stderr.flush()
             return
         self._start_workers()
@@ -93,10 +93,21 @@ class Napalm(threading.Thread):
                 stderr.flush()
                 break
             except(KeyboardInterrupt, EOFError):
+                self._stop_flag = True
                 break
 
-        # Set the stop flag, we are done here
-        self._stop_flag = True
+        # Wait until all items inside the queue are processed, without this
+        # check the for loop (which iterates over the search result pages)
+        # could end before the queue is empty and thus resulting in lost links.
+        if(not self._stop_flag and self._queue.qsize() > 0):
+            stderr.write("\nAsking all worker threads to finish their work...")
+            stderr.flush()
+            try:
+                while self._queue.qsize() > 0:
+                    pass
+            except(KeyboardInterrupt, EOFError):
+                pass
+
         stderr.write("\n")
         stderr.flush()
 
@@ -111,7 +122,7 @@ class Napalm(threading.Thread):
                 filtered.add(url)
             self._gathered = filtered
 
-        if not self._lock.locked():
+        if(not self._lock.locked()):
             with self._lock:
                 for url in self._gathered:
                     print url
@@ -119,6 +130,7 @@ class Napalm(threading.Thread):
 
     def _fill_queue(self, hashes):
         """ Fills the queue with the passed hashes. """
+        hashes = list(set(hashes))
         [self._queue.put(hash_) for hash_ in hashes if hash_]
 
 
@@ -136,25 +148,20 @@ class Napalm(threading.Thread):
             # Decrypt it and add it to the results.
             stderr.write("\rGathered links: {0} - Page: {1}".format(len(self._gathered), self._page_no))
             stderr.flush()
-            try: # Post a hash from the queue to the server (visit the site)
-                hash_ = self._queue.get()
-                if not hash_:
-                    continue
-                source = self._get_source({"mode": "Content", "hash": hash_})
-                if not source:
-                    raise KeyboardInterrupt
-                # Decrypt the base64 encrypted string and add it to the result
-                link = self._extract_encoded_link(source)
-                if not link:
-                    raise KeyboardInterrupt
-            except Exception:
+            hash_ = self._queue.get()
+            if not hash_:
+                continue
+            source = self._get_source({"mode": "Content", "hash": hash_})
+            if not source:
                 self._stop_flag = True
-                break
-            else:
-                if not self._lock.locked():
-                    with self._lock:
-                        self._gathered.add(link)
-                        self._queue.task_done()
+            # Decrypt the base64 encrypted string and add it to the result
+            link = self._extract_encoded_link(source)
+            if not link:
+                self._stop_flag = True
+            if not self._lock.locked():
+                with self._lock:
+                    self._gathered.add(link)
+            self._queue.task_done()
 
 
 

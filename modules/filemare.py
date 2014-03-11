@@ -1,5 +1,5 @@
 from socket import timeout
-from sys import stdout, stderr
+from sys import stderr, exit
 import urlparse
 import requests
 import bs4
@@ -19,8 +19,8 @@ class Filemare(object):
         self._args = args
         self._built_url = self._build_url()
         self._session = requests.Session()
+        self._get_session()
         self._get_default_headers()
-        self._session.get(self._built_url)
         self._collected = []
 
     def _filter(self, source):
@@ -81,6 +81,18 @@ class Filemare(object):
                                                     " rv:26.0) Gecko/20100101 Firefox/26.0",
                                       })
 
+    def _get_session(self):
+        """ Gets the session cookie and checks if the search result yields results. """
+        try:
+            self._session.get(self._built_url)
+        except(requests.exceptions.RequestException):
+            stderr.write("Failed to establish a connection!\n")
+            stderr.flush()
+        else:
+            return
+
+        exit(1)
+
     def search(self):
         """ Initialize the search process. """
         # Set the 'start at' variable if it has been passed,
@@ -94,8 +106,12 @@ class Filemare(object):
                 source = self._get_source(self._built_url + str(i) + "/10")
                 if not source:
                     raise KeyboardInterrupt
-                elif("You have reached hourly free access limits." in source):
-                    stderr.write("\nFile limit reached, use a proxy!")
+                elif("You have reached hourly free access limits." in source or
+                     "You have reached daily free access limits." in source):
+                    if(len(self._collected) > 1):
+                        stderr.write("\nFile limit reached, use a proxy!")
+                    else:
+                        stderr.write("\rFile limit reached, use a proxy!")
                     stderr.flush()
                     raise KeyboardInterrupt
                 urls = self._filter(source)
@@ -104,15 +120,12 @@ class Filemare(object):
                 if(self._args.parse):
                     for url in urls:
                         self._collected.append(self._parse(url))
+                        self._collected = list(set(self._collected))
                 else:
                     self._collected.extend(urls)
-                    stderr.write("\rGathered links: {0} - Page: {1}".format(len(self._collected), page_no))
-                    stderr.flush()
-        except(requests.exceptions) as e:
-            stderr.write(e.message+"\n")
-            stderr.flush()
-
-        except(KeyboardInterrupt, EOFError):
+                stderr.write("\rGathered links: {0} - Page: {1}".format(len(self._collected), page_no))
+                stderr.flush()
+        except(KeyboardInterrupt, EOFError, requests.exceptions.RequestException):
             pass
 
         stderr.write("\n")
@@ -121,6 +134,5 @@ class Filemare(object):
         # Distinct the search results and print them to stdout
         self._collected = list(set(self._collected))
         for link in self._collected:
-            if link:
-                print link
+            print link
 

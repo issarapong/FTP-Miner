@@ -46,7 +46,7 @@ class Filewatcher(object):
         try: # Make the get request and return the source code
             request = requests.get(url, headers=self._headers, timeout=5)
         except(requests.exceptions.Timeout, timeout, requests.exceptions.ConnectionError):
-            stderr.write("Failed to connect to Filewatcher!\n")
+            stderr.write("Failed to establish a connection!\n")
             stderr.flush()
         else:
             return request.text.encode("utf8", errors="ignore")
@@ -75,26 +75,29 @@ class Filewatcher(object):
             for i in range(0, 99999):
                 source = self._get_source(self._built_url + str(i))
                 if not source:
-                    raise KeyboardInterrupt
+                    raise ValueError
                 elif("is gone" in source or "No results." in source):
-                    raise KeyboardInterrupt
+                    raise ValueError
                 urls = self._filter(source)
                 if(self._args.parse):
                     for url in urls:
-                        self.collected.append(self._parse(url))
+                        if url:
+                            self.collected.append(self._parse(url))
+                            self.collected = list(set(self.collected))
                 else:
                     self.collected.extend(urls)
-                    stderr.write("\rGathered links: {0} - Page: {1}".format(len(self.collected), i))
-                    stderr.flush()
+                stderr.write("\rGathered links: {0} - Page: {1}".format(len(self.collected), i+1))
+                stderr.flush()
+        except(ValueError):
+            pass
         except(KeyboardInterrupt, EOFError):
+            stderr.write("n")
+            stderr.flush()
             pass
 
-        stderr.write("\n")
-        stderr.flush()
 
         # Distinct the search results and print them to stdout
-        self.collected = list(set(self.collected))
+        self.collected = set(self.collected)
         for link in self.collected:
-            if link:
-                print link
+            print link
 

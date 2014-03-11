@@ -56,15 +56,35 @@ from modules.filemare import Filemare
 #           leading schemes like http:// or anything the like!
 #
 #
+#
+# Custom hoster scraping, you can specify from which hosters you want to extract results,
+# set one or more flags from the following list:
+#
+#   -fw / --filewatcher
+#   -ma / --mamont
+#   -fm / --filemare
+#   -na / --napalm
+#
 
 
 def main(args):
-    napalm = {"name": "Napalm FTP Indexer", "func": Napalm}
-    mamont = {"name": "Mamont", "func": Mamont}
-    filewatcher = {"name": "FileWatcher", "func": Filewatcher}
-    filemare = {"name": "FileMare", "func": Filemare}
-    # Insert the services you want to use in the tuple below
-    functions = (napalm, mamont, filemare, filewatcher)
+    napalm = {"name": "Napalm", "func": Napalm, "flag_set": args.napalm}
+    mamont = {"name": "Mamont", "func": Mamont, "flag_set": args.mamont}
+    filewatcher = {"name": "FileWatcher", "func": Filewatcher, "flag_set": args.filewatcher}
+    filemare = {"name": "FileMare", "func": Filemare, "flag_set": args.filemare}
+
+    custom_functions = []
+    for routine in (napalm, mamont, filewatcher, filemare):
+        if(routine["flag_set"]):
+            custom_functions.append(routine)
+
+    # Process -fw, -fm, -ma, -na flags if they are set
+    if(len(custom_functions) > 0):
+        functions = custom_functions
+    else:
+        functions = (napalm, mamont, filewatcher, filemare)
+
+    # Start the scraping process
     for function in functions:
         try:
             stderr.write("\t-=[ {0} ]=-\n".format(function["name"]))
@@ -83,10 +103,20 @@ if __name__ == "__main__":
     parser.add_argument("-q", "--query", required=False)
     parser.add_argument("-p", "--parse", required=False,
                         help="Whether or not to parse the results, thus parsing all urls"+\
-                             " to root urls to get a more compact list.")
+                             " to root urls to get a more compact list.",
+                        action="store_true")
     parser.add_argument("-l", "--location", required=False)
     parser.add_argument("-c", "--cloak", required=False)
     parser.add_argument("-i", "--index", required=False)
+    parser.add_argument("-fw", "--filewatcher", action="store_true",
+                       help="Search on filewatcher.")
+    parser.add_argument("-fm", "--filemare", action="store_true",
+                       help="Search on filemare.")
+    parser.add_argument("-ma", "--mamont", action="store_true",
+                       help="Search on Mamont.")
+    parser.add_argument("-na", "--napalm", action="store_true",
+                       help="Search on Napalm FTP Indexer.")
+
     args = parser.parse_args()
 
     main(args)
