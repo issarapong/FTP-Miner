@@ -75,9 +75,9 @@ class Filewatcher(object):
             for i in range(0, 99999):
                 source = self._get_source(self._built_url + str(i))
                 if not source:
-                    raise ValueError
-                elif("is gone" in source or "No results." in source):
-                    raise ValueError
+                    break
+                elif("No results." in source):
+                    raise ValueError("Search query didn't yield any results.")
                 urls = self._filter(source)
                 if(self._args.parse):
                     for url in urls:
@@ -88,8 +88,9 @@ class Filewatcher(object):
                     self.collected.extend(urls)
                 stderr.write("\rGathered links: {0} - Page: {1}".format(len(self.collected), i+1))
                 stderr.flush()
-        except(ValueError):
-            pass
+        except(ValueError) as e:
+            stderr.write(e.message)
+            stderr.flush()
         except(KeyboardInterrupt, EOFError):
             pass
 

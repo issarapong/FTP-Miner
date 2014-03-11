@@ -57,7 +57,7 @@ class Mamont():
         if not source:
             return
         if("Sorry, no results for:" in source):
-            stderr.write("Sorry, no results for: {0}\n".format(self._args.search))
+            stderr.write("Search query didn't yield any results.")
             stderr.flush()
             return
 

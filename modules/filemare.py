@@ -75,11 +75,10 @@ class Filemare(object):
         return url
 
     def _get_default_headers(self):
-        """ Returns the default headers which will be used for each request. """
+        """ Sets the default headers which is used for each request made. """
         self._session.headers.update({"Host": "filemare.com",
                                       "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64;"+\
-                                                    " rv:26.0) Gecko/20100101 Firefox/26.0",
-                                      })
+                                                    " rv:26.0) Gecko/20100101 Firefox/26.0"})
 
     def _get_session(self):
         """ Gets the session cookie and checks if the search result yields results. """
@@ -105,18 +104,21 @@ class Filemare(object):
             for page_no, i in enumerate(range(start, 99999, 10), start):
                 source = self._get_source(self._built_url + str(i) + "/10")
                 if not source:
-                    raise KeyboardInterrupt
+                    break
+                elif("About 0 results" in source):
+                    raise ValueError("Search query didn't yield any results.")
                 elif("You have reached hourly free access limits." in source or
                      "You have reached daily free access limits." in source):
                     if(len(self._collected) > 1):
-                        stderr.write("\nFile limit reached, use a proxy!")
+                        raise ValueError("\nFile limit reached, use a proxy!")
                     else:
-                        stderr.write("\rFile limit reached, use a proxy!")
-                    stderr.flush()
-                    raise KeyboardInterrupt
+                        raise ValueError("\rFile limit reached, use a proxy!")
+                elif("<a href='https://filemare.com/en/signup'>Sign up</a>" not in source and
+                     self._args.cloak):
+                    raise ValueError("\rInvalid proxy configuration, we didn't reach filemare!")
                 urls = self._filter(source)
                 if not urls:
-                    raise KeyboardInterrupt
+                    break
                 if(self._args.parse):
                     for url in urls:
                         self._collected.append(self._parse(url))
@@ -125,7 +127,10 @@ class Filemare(object):
                     self._collected.extend(urls)
                 stderr.write("\rGathered links: {0} - Page: {1}".format(len(self._collected), page_no))
                 stderr.flush()
-        except(KeyboardInterrupt, EOFError, requests.exceptions.RequestException):
+        except(ValueError) as e:
+            stderr.write(e.message)
+            stderr.flush()
+        except(requests.exceptions.RequestException):
             pass
 
         stderr.write("\n")
