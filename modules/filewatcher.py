@@ -91,10 +91,10 @@ class Filewatcher(object):
         except(ValueError):
             pass
         except(KeyboardInterrupt, EOFError):
-            stderr.write("\n")
-            stderr.flush()
             pass
 
+        stderr.write("\n")
+        stderr.flush()
 
         # Distinct the search results and print them to stdout
         self.collected = set(self.collected)
