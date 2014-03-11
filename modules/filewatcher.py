@@ -91,7 +91,7 @@ class Filewatcher(object):
         except(ValueError):
             pass
         except(KeyboardInterrupt, EOFError):
-            stderr.write("n")
+            stderr.write("\n")
             stderr.flush()
             pass
 
