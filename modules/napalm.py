@@ -175,7 +175,7 @@ class Napalm(threading.Thread):
                    "DNT": dnt, "Referer": referer,
                    "Connection": "close"}
 
-        self._session.headers.update = headers
+        self._session.headers.update(headers)
 
 
     def _get_source(self, data):
