@@ -56,7 +56,7 @@ class Filewatcher(object):
         # The parameters of the URL are straight forward, here is a short list:
         #   q = query
         #   p = page
-        url = "http://www.filewatcher.com/_/?q="
+        url = "http://filewatcher.com/_/?q="
         url += self._args.search
         url += "&p="
         # returns http://www.filewatcher.com/_/?q=QUERY&q=
@@ -72,13 +72,15 @@ class Filewatcher(object):
     def search(self):
         """ Initialize the search process. """
         try: # Extract from the i-th search result page.
-            for i in range(0, 99999):
+            for page_no, i in enumerate(range(0, 99999), 1):
                 source = self._get_source(self._built_url + str(i))
                 if not source:
                     break
-                elif("No results." in source):
+                elif("No results." in source and len(self.collected) < 1):
                     raise ValueError("Search query didn't yield any results.")
                 urls = self._filter(source)
+                if not urls:
+                    break
                 if(self._args.parse):
                     for url in urls:
                         if url:
@@ -86,7 +88,7 @@ class Filewatcher(object):
                             self.collected = list(set(self.collected))
                 else:
                     self.collected.extend(urls)
-                stderr.write("\rGathered links: {0} - Page: {1}".format(len(self.collected), i+1))
+                stderr.write("\rGathered links: {0} - Page: {1}".format(len(self.collected), page_no))
                 stderr.flush()
         except(ValueError) as e:
             stderr.write(e.message)

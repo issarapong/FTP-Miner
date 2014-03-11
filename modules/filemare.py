@@ -19,8 +19,8 @@ class Filemare(object):
         self._args = args
         self._built_url = self._build_url()
         self._session = requests.Session()
-        self._get_session()
         self._get_default_headers()
+        self._get_session()
         self._collected = []
 
     def _filter(self, source):

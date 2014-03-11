@@ -52,8 +52,14 @@ class Mamont():
 
         url = self._build_url(self._args.search, self._args.location,
                               0, self._args.query)
-        # First execute the query to make sure that the search yields results.
-        source = self._get_source(url)
+        try:
+            # First execute the query to make sure that the search yields results.
+            source = self._get_source(url)
+        except(requests.exceptions.RequestException):
+            stderr.write("\rCouldn't establish a connection!\n")
+            stderr.flush()
+            return
+
         if not source:
             return
         if("Sorry, no results for:" in source):
@@ -76,7 +82,7 @@ class Mamont():
                 self._links.extend(links)
                 stderr.write("\rGathered links: {0} - Page: {1}".format(len(self._links), page))
                 stderr.flush()
-            except KeyboardInterrupt:
+            except(KeyboardInterrupt, requests.exceptions.Timeout):
                 break
 
         stderr.write("\n")
@@ -135,11 +141,13 @@ class Mamont():
                      " rv:27.0) Gecko/20100101 Firefox/27.0"
         try:
             req = requests.get(url, headers={"User-Agent": user_agent,
-                                             "Connection": "close"})
+                                             "Connection": "close"}, timeout=5)
         except(requests.exceptions.ConnectionError):
             stderr.write("Failed to establish a connection!\n")
             stderr.flush()
             return
+        except(requests.exceptions.Timeout):
+            raise requests.exceptions.Timeout
 
         return req.text.encode("utf8", errors="ignore")
 
