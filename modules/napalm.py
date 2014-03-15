@@ -247,6 +247,8 @@ class Napalm(threading.Thread):
     def _extract_encoded_link(self, source):
         """ Extracts the encoded link from the passed source, the return value
             of this method is the decoded link, type string. """
+        if not source:
+            return
         match = re.search("ct1 = ct1_t = decodeURIComponent\(escape\(decode\('.*'", source)
         if not match:
             print("Failed to extract the encoded link")
