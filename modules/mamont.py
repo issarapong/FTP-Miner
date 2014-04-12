@@ -63,7 +63,7 @@ class Mamont():
         if not source:
             return
         if("Sorry, no results for:" in source):
-            stderr.write("Search query didn't yield any results.")
+            stderr.write("Search query didn't yield any results.\n")
             stderr.flush()
             return
 
