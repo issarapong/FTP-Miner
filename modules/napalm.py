@@ -17,7 +17,7 @@ import bs4
 #             of their collected data.
 #
 #             If you are interessted in the website and want to make a picture fo
-#             yourself, visit it under the following link: www.search-ftps.com
+#             yourself, visit it under the following link: www.searchftps.org
 #
 #             The process looks about like this:
 #
@@ -31,7 +31,7 @@ import bs4
 
 
 class Napalm(threading.Thread):
-    """ Automates the searching and extracting of search-ftps.com's encoded ftp links. """
+    """ Automates the searching and extracting of searchftps.org's encoded ftp links. """
     def __init__(self, args):
         threading.Thread.__init__(self)
         self._queue = Queue.Queue()
@@ -47,7 +47,7 @@ class Napalm(threading.Thread):
     def search(self):
         """ Initializes the search process. """
         try:
-            self._session.get("http://www.search-ftps.com/submit")
+            self._session.get("http://www.searchftps.org/about")
             # First try to search for the passed keyword to make sure the search
             # yields results.
             source = self._get_source({"mode": "Search", "keyword": self._args.search})
@@ -167,14 +167,14 @@ class Napalm(threading.Thread):
 
     def _configure_session(self):
         """ Declares the default header information used for each request. """
-        host = "www.search-ftps.com"
+        host = "www.searchftps.org"
         user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64;"+\
                      " rv:27.0) Gecko/20100101 Firefox/27.0"
         accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         accept_language = "en-US,en;q=0.5"
         accept_encoding = "gzip, deflate"
         dnt = "1"
-        referer = "http://www.search-ftps.com/"
+        referer = "http://www.searchftps.org/"
 
         headers = {"Host": host, "User-Agent": user_agent, "Accept": accept,
                    "Accept-Language": accept_language,
@@ -211,7 +211,7 @@ class Napalm(threading.Thread):
                                                              data["index"])
             data = {"action": "result", "args": args}
         # Post the configured data to the server
-        req = self._session.post("http://www.search-ftps.com/", data=data)
+        req = self._session.post("http://www.searchftps.org/", data=data)
         if(req.status_code != requests.codes.ok):
             self._stop_flag = True
             return
